@@ -1,6 +1,7 @@
 package hu.letscode.cloud;
 
 import java.nio.file.WatchEvent;
+import java.nio.file.Watchable;
 
 import hu.letscode.cloud.events.FileChangeEvent;
 import hu.letscode.cloud.events.FileCreateEvent;
