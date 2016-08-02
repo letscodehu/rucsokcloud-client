@@ -1,4 +1,4 @@
-package hu.letscode.cloud;
+package hu.letscode.cloud.services;
 
 public class DownStreamService {
 
