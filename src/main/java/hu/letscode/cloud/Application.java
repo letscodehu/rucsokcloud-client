@@ -49,15 +49,10 @@ public class Application {
 			System.exit(1);
 		}
 		Path dir = FileSystems.getDefault().getPath(args[0]);
-		try {
-			Application app = new Application(
-					new WatcherService(dir, fileQueue), new UpStreamService(requestQueue, args[1]), 
-							new DownStreamService(), new BatchingService(fileQueue, requestQueue, dir));
-			app.start();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+		Application app = new Application(
+				new WatcherService(dir, fileQueue), new UpStreamService(requestQueue, args[1]), 
+						new DownStreamService(), new BatchingService(fileQueue, requestQueue, dir));
+		app.start();
 	}
 
 	private static void showUsage() {

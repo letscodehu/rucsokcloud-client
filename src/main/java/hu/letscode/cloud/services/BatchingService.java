@@ -31,7 +31,7 @@ public class BatchingService extends Thread {
 			currentFile = new File(fileQueue.take());
 			logger.info("incoming filehash : " + currentFile.hashCode());
 			while (true) {
-				Thread.sleep(2000);
+				Thread.sleep(100);
 				if (currentBatch.isItFits(currentFile)) {
 					logger.info("adding file to request");
 					currentBatch.add(currentFile);

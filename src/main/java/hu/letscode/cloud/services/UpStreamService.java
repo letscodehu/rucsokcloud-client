@@ -32,24 +32,20 @@ public class UpStreamService extends Thread {
 	private static final Logger logger = Logger.getLogger("cloud-client");
 	private BlockingQueue<FileModification> queue;
 	private List<String> keys = new ArrayList<String>();
-	private MessageDigest md5;
+	
 	private String serverUrl;
 
 	public UpStreamService(BlockingQueue<FileModification> queue, String serverUrl) {
 		this.queue = queue;
 		this.serverUrl = serverUrl;
-		try {
-			md5 = MessageDigest.getInstance("MD5");
-		} catch (NoSuchAlgorithmException e) {
-			e.printStackTrace();
-		}
+	
 	}
 
 	public void run() {
 		logger.info("consume started");
 		while(true) {
 			try {
-				Thread.sleep(20000);
+				Thread.sleep(1000);
 				FileModification mod = queue.take();
 				logger.info("took an item from the requestqueue, size: " + mod.getBatchSize());
 			} catch (InterruptedException e) {

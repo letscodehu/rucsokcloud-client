@@ -10,7 +10,7 @@ import java.util.List;
 public class FileModification {
 
 	private List<File> filesToUpload = new ArrayList<File>();
-	private static long LIMIT = 8000000;
+	private static long LIMIT = 800000000;
 	
 	
 	public void add(File file) {
