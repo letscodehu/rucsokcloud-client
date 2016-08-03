@@ -20,8 +20,11 @@ import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 import org.mapdb.DB;
 import org.mapdb.DBMaker;
 import org.mapdb.Serializer;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 
 import hu.letscode.cloud.Application;
@@ -46,13 +49,30 @@ public class ApplicationConfig {
 	@Value("${upload.serverUrl}")
 	private String serverUrl;
 	
+	@Autowired
+	private ApplicationEventPublisher publisher;
+	
 	@Bean
 	public Application application() {
 		return new Application(
 				new GUIService(trayIcon()),
-				new WatcherService(fileQueue, rootDirectory(), fileMap()), 
-				new UpStreamService(requestQueue, new FileModificationTransformer(serverUrl), client()), 
-						new DownStreamService(), new BatchingService(fileQueue, requestQueue));
+				watcherService(), 
+				upstreamService(), 
+						new DownStreamService(), batchingService());
+	}
+
+	private BatchingService batchingService() {
+		return new BatchingService(fileQueue, requestQueue);
+	}
+
+	private WatcherService watcherService() {
+		return new WatcherService(fileQueue, rootDirectory(), fileMap());
+	}
+
+	private UpStreamService upstreamService() {
+		UpStreamService service = new UpStreamService(requestQueue, new FileModificationTransformer(serverUrl), client());
+		service.setApplicationEventPublisher(publisher);
+		return service;
 	}
 
 	@Bean

@@ -8,8 +8,13 @@ import org.apache.http.HttpResponse;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpPost;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.context.ApplicationEventPublisherAware;
+import org.springframework.stereotype.Component;
 
 import hu.letscode.cloud.FileModificationTransformer;
+import hu.letscode.cloud.events.CommunicationExceptionEvent;
 import hu.letscode.cloud.model.FileModification;
 
 public class UpStreamService extends Thread {
@@ -18,6 +23,14 @@ public class UpStreamService extends Thread {
 	private BlockingQueue<FileModification> queue;
 	private FileModificationTransformer transformer;
 	private HttpClient httpClient;
+	
+	private ApplicationEventPublisher publisher;
+
+	   public void setApplicationEventPublisher
+	              (ApplicationEventPublisher publisher){
+		   System.err.println("befut" + publisher.toString());
+	      this.publisher = publisher;
+	   }
 	
 	public UpStreamService(BlockingQueue<FileModification> queue, FileModificationTransformer transformer, HttpClient client) {
 		this.queue = queue;
@@ -43,8 +56,7 @@ public class UpStreamService extends Thread {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+				this.publisher.publishEvent(new CommunicationExceptionEvent(this, "Server error", "Can't synchronize"));
 			}
 		}
 	}

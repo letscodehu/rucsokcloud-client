@@ -4,8 +4,6 @@ import java.util.logging.Logger;
 
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
-import org.springframework.context.support.AbstractApplicationContext;
-
 import hu.letscode.cloud.config.ApplicationConfig;
 import hu.letscode.cloud.services.BatchingService;
 import hu.letscode.cloud.services.DownStreamService;
