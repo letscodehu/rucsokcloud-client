@@ -18,6 +18,7 @@ import hu.letscode.cloud.FileModificationTransformer;
 import hu.letscode.cloud.model.FileModification;
 import hu.letscode.cloud.services.BatchingService;
 import hu.letscode.cloud.services.DownStreamService;
+import hu.letscode.cloud.services.GUIService;
 import hu.letscode.cloud.services.UpStreamService;
 import hu.letscode.cloud.services.WatcherService;
 
@@ -36,6 +37,7 @@ public class ApplicationConfig {
 	@Bean
 	public Application application() {
 		return new Application(
+				new GUIService(),
 				new WatcherService(fileQueue, rootDirectory()), 
 				new UpStreamService(requestQueue, new FileModificationTransformer(serverUrl), client()), 
 						new DownStreamService(), new BatchingService(fileQueue, requestQueue, rootDirectory()));

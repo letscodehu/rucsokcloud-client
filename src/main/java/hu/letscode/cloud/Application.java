@@ -4,10 +4,12 @@ import java.util.logging.Logger;
 
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+import org.springframework.context.support.AbstractApplicationContext;
 
 import hu.letscode.cloud.config.ApplicationConfig;
 import hu.letscode.cloud.services.BatchingService;
 import hu.letscode.cloud.services.DownStreamService;
+import hu.letscode.cloud.services.GUIService;
 import hu.letscode.cloud.services.UpStreamService;
 import hu.letscode.cloud.services.WatcherService;
 
@@ -19,9 +21,11 @@ public class Application {
 
 	private UpStreamService upStreamService;
 	private BatchingService batchingService;
+	private GUIService guiService;
 	
-	public Application(WatcherService watcherService, UpStreamService upStreamService,  DownStreamService downStreamService, BatchingService batchingService) {
+	public Application(GUIService guiService, WatcherService watcherService, UpStreamService upStreamService,  DownStreamService downStreamService, BatchingService batchingService) {
 		this.watcherService = watcherService;
+		this.guiService = guiService;
 		this.batchingService = batchingService;
 		this.upStreamService = upStreamService;
 		this.downStreamService = downStreamService;
@@ -29,6 +33,7 @@ public class Application {
 	
 	public void start() {
 		logger.info("Application started");
+		guiService.start();
 		watcherService.start();
 		batchingService.start();
 		upStreamService.start();
