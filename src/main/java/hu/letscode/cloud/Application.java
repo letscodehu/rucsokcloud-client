@@ -2,6 +2,10 @@ package hu.letscode.cloud;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.net.Proxy;
+import java.net.SocketAddress;
+import java.net.Proxy.Type;
 import java.nio.file.FileSystems;
 import java.nio.file.Path;
 import java.util.Queue;
@@ -10,6 +14,12 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Executors;
 import java.util.concurrent.SynchronousQueue;
 import java.util.logging.Logger;
+
+import org.apache.http.HttpHost;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.impl.client.HttpClients;
+import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 
 import hu.letscode.cloud.jobs.UpsyncJob;
 import hu.letscode.cloud.model.FileModification;
@@ -48,9 +58,18 @@ public class Application {
 			showUsage();
 			System.exit(1);
 		}
+		PoolingHttpClientConnectionManager cm = new PoolingHttpClientConnectionManager();
+        cm.setMaxTotal(100);
+
+        HttpHost host = new HttpHost("localhost",8888, "http");
+        
+        CloseableHttpClient httpclient = HttpClients.custom()
+                .setConnectionManager(cm)
+                // .setProxy(host)
+                .build();
 		Path dir = FileSystems.getDefault().getPath(args[0]);
 		Application app = new Application(
-				new WatcherService(dir, fileQueue), new UpStreamService(requestQueue, args[1]), 
+				new WatcherService(dir, fileQueue), new UpStreamService(requestQueue, new FileModificationTransformer(args[1]), httpclient), 
 						new DownStreamService(), new BatchingService(fileQueue, requestQueue, dir));
 		app.start();
 	}

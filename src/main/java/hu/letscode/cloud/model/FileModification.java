@@ -10,7 +10,7 @@ import java.util.List;
 public class FileModification {
 
 	private List<File> filesToUpload = new ArrayList<File>();
-	private static long LIMIT = 800000000;
+	private static long LIMIT = 2000000;
 	
 	
 	public void add(File file) {
@@ -21,12 +21,19 @@ public class FileModification {
 		return getBatchSize() > LIMIT;
 	}
 	
+	public File take() {
+		if (filesToUpload.size() == 0) {
+			return null;
+		}
+		return filesToUpload.remove(filesToUpload.size() -1);
+	}
+	
 	public long getBatchSize() {
 		long size = 0;
 		for (File file : filesToUpload) {
 			size += getFileSize(file);
 		}
-		System.out.println("Filesize: " + size);
+		System.out.println(size);
 		return size;
 	}
 	

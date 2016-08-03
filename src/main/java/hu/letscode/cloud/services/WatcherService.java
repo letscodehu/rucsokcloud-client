@@ -81,6 +81,13 @@ public class WatcherService extends Thread {
 					}
 	    	        return FileVisitResult.CONTINUE;
 	    	    }
+	    	 
+	    	 @Override
+	    	    public FileVisitResult visitFileFailed(Path file,
+	    	                                       IOException exc) {
+	    	        System.err.println("csecsrefutott a visit!");
+	    	        return FileVisitResult.CONTINUE;
+	    	    }
 	    });
 	}
 
