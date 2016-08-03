@@ -1,6 +1,9 @@
 package hu.letscode.cloud.services;
 
+import java.io.File;
 import java.io.IOException;
+import java.math.BigInteger;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.FileSystems;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
@@ -10,74 +13,89 @@ import java.nio.file.WatchEvent;
 import java.nio.file.WatchKey;
 import java.nio.file.WatchService;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Queue;
+import java.util.concurrent.BlockingQueue;
 import java.util.logging.Logger;
 
 import hu.letscode.cloud.EventListener;
+import hu.letscode.cloud.jobs.UpsyncJob;
 
 import static java.nio.file.StandardWatchEventKinds.*;
 
 
-public class WatcherService {
+public class WatcherService extends Thread {
 
 	private WatchService watcher;
 	private Path directory;
-	private EventListener listener;
+	private Map<String, Long> readFiles = new HashMap<String, Long>();
+	private BlockingQueue<String> fileQueue;
 	private static final Logger logger = Logger.getLogger("cloud-client");
+	private MessageDigest md5;
 
-	public WatcherService(Path directory, UpStreamService listener) throws IOException {
+	public WatcherService(Path directory, BlockingQueue<String> fileQueue) {
 		this.directory = directory;
-		this.listener = listener;
-		watcher = FileSystems.getDefault().newWatchService();
-		listener.consume();
+		this.fileQueue = fileQueue;
+		try {
+			md5 = MessageDigest.getInstance("MD5");
+		} catch (NoSuchAlgorithmException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	public void run() {
+		while(true) {
+			try {
+				registerRecursive(directory);
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+	}
+	
+	private boolean isExists(Path file, BasicFileAttributes attrs) {
+		return readFiles.containsKey(generateHash(file));
+	}
+	
+	private boolean isRecent(Path file, BasicFileAttributes attrs) {
+		return readFiles.get(generateHash(file)).longValue() < attrs.size();
 	}
 	
 	private void registerRecursive(final Path root) throws IOException {
-	    // register all subfolders
 	    Files.walkFileTree(root, new SimpleFileVisitor<Path>() {
-	        @Override
-	        public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
-	        	
-	            dir.register(watcher, ENTRY_CREATE, ENTRY_DELETE, ENTRY_MODIFY);
-	            logger.info(dir.toAbsolutePath().toString() + " directory registered");
-	            return FileVisitResult.CONTINUE;
-	        }
+	    	 @Override
+	    	    public FileVisitResult visitFile(Path file, BasicFileAttributes attrs)
+	    	        throws IOException
+	    	    {	
+	    		 	try {
+						Thread.sleep(100);
+						add(root.resolve(file), attrs);
+					} catch (InterruptedException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+	    	        return FileVisitResult.CONTINUE;
+	    	    }
 	    });
 	}
 
-	public void watch() {
-		try {
-			registerRecursive(directory);
-			WatchKey key = watcher.take();
-
-			while(true) {
-				for (WatchEvent<?> event : key.pollEvents()) {
-					Path dir = (Path)key.watchable();
-					Path fullPath = dir.resolve((Path) event.context());
-					if (Files.isDirectory(fullPath) && !event.kind().equals(ENTRY_DELETE)) {
-						registerRecursive(fullPath);
-					}
-					throwEvents(event);
-				}
-			}
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		} catch (IOException e) {
-			e.printStackTrace();
+	
+	private void add(Path file, BasicFileAttributes attrs) throws InterruptedException {
+		if (!isExists(file, attrs) || isRecent(file, attrs)) {
+			logger.info("Putting path on the queue " + directory.resolve(file).toString());
+			fileQueue.put(directory.resolve(file).toString());	
+			readFiles.put(generateHash(file), attrs.lastModifiedTime().toMillis());
 		}
+	}
 
+	private String generateHash(Path file) {
+		md5.update(StandardCharsets.UTF_8.encode(file.toString()));
+		return String.format("%032x", new BigInteger(1, md5.digest()));
 	}
 	
-	public void throwEvents(WatchEvent<?> event) {
-		logger.info(event.kind().name() + " : " + event.context().toString());
-		if (event.kind().equals(ENTRY_CREATE) && Files.isDirectory((Path) event.context())) {
-			listener.onCreateDirectory(event);
-		} else if (event.kind().equals(ENTRY_CREATE)) {
-			listener.onCreate(event);
-		} else if (event.kind().equals(ENTRY_MODIFY)) {
-			listener.onChange(event);
-		} else {
-			listener.onDelete(event);
-		}
-	}
-
 }
