@@ -41,8 +41,7 @@ public class UpsyncJob implements Runnable {
 			Path filePath = event.context();
 			HttpClient client = new DefaultHttpClient();
 			HttpPost post = new HttpPost(serverUrl);
-			FileEntity file = new FileEntity(filePath.toFile());
-			post.getParams().setParameter("path", filePath.toAbsolutePath().toString());
+			FileEntity file = new FileEntity(filePath.toAbsolutePath().toFile());
 			post.setEntity(file);
 
 			try {

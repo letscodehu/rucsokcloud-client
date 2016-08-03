@@ -51,9 +51,10 @@ public class WatcherService {
 
 			while(true) {
 				for (WatchEvent<?> event : key.pollEvents()) {
-					Path file = (Path) event.context();
-					if (Files.isDirectory(file) && !event.kind().equals(ENTRY_DELETE)) {
-						registerRecursive(file);
+					Path dir = (Path)key.watchable();
+					Path fullPath = dir.resolve((Path) event.context());
+					if (Files.isDirectory(fullPath) && !event.kind().equals(ENTRY_DELETE)) {
+						registerRecursive(fullPath);
 					}
 					throwEvents(event);
 				}

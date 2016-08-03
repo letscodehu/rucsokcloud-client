@@ -2,6 +2,7 @@ package hu.letscode.cloud.services;
 
 import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
 import java.nio.file.WatchEvent;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
