@@ -3,7 +3,6 @@ package hu.letscode.cloud;
 import java.io.File;
 
 import org.apache.http.client.methods.HttpPost;
-import org.apache.http.entity.FileEntity;
 import org.apache.http.entity.mime.HttpMultipartMode;
 import org.apache.http.entity.mime.MultipartEntityBuilder;
 
@@ -14,6 +13,7 @@ public class FileModificationTransformer {
 	private String serverUrl;
 	
 	public FileModificationTransformer(String serverUrl) {
+		System.out.println(serverUrl);
 		this.serverUrl = serverUrl;
 	}
 	

@@ -1,28 +1,11 @@
 package hu.letscode.cloud;
 
-import java.io.File;
-import java.io.IOException;
-import java.net.InetSocketAddress;
-import java.net.Proxy;
-import java.net.SocketAddress;
-import java.net.Proxy.Type;
-import java.nio.file.FileSystems;
-import java.nio.file.Path;
-import java.util.Queue;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.Executors;
-import java.util.concurrent.SynchronousQueue;
 import java.util.logging.Logger;
 
-import org.apache.http.HttpHost;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.http.impl.client.HttpClients;
-import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 
-import hu.letscode.cloud.jobs.UpsyncJob;
-import hu.letscode.cloud.model.FileModification;
+import hu.letscode.cloud.config.ApplicationConfig;
 import hu.letscode.cloud.services.BatchingService;
 import hu.letscode.cloud.services.DownStreamService;
 import hu.letscode.cloud.services.UpStreamService;
@@ -33,8 +16,7 @@ public class Application {
 	private DownStreamService downStreamService;
 	private WatcherService watcherService;
 	private static final Logger logger = Logger.getLogger("cloud-client");
-	private static volatile BlockingQueue<String> fileQueue = new ArrayBlockingQueue<String>(10);
-	private static volatile BlockingQueue<FileModification> requestQueue = new ArrayBlockingQueue<FileModification>(4);
+
 	private UpStreamService upStreamService;
 	private BatchingService batchingService;
 	
@@ -58,19 +40,10 @@ public class Application {
 			showUsage();
 			System.exit(1);
 		}
-		PoolingHttpClientConnectionManager cm = new PoolingHttpClientConnectionManager();
-        cm.setMaxTotal(100);
-
-        HttpHost host = new HttpHost("localhost",8888, "http");
-        
-        CloseableHttpClient httpclient = HttpClients.custom()
-                .setConnectionManager(cm)
-                // .setProxy(host)
-                .build();
-		Path dir = FileSystems.getDefault().getPath(args[0]);
-		Application app = new Application(
-				new WatcherService(dir, fileQueue), new UpStreamService(requestQueue, new FileModificationTransformer(args[1]), httpclient), 
-						new DownStreamService(), new BatchingService(fileQueue, requestQueue, dir));
+		System.getProperties().put("upload.serverUrl", args[1]);
+		System.getProperties().put("watch.directory", args[0]);
+		ApplicationContext context = new AnnotationConfigApplicationContext(ApplicationConfig.class); 
+		Application app = context.getBean(Application.class);
 		app.start();
 	}
 

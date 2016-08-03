@@ -22,6 +22,8 @@ import java.util.Queue;
 import java.util.concurrent.BlockingQueue;
 import java.util.logging.Logger;
 
+import org.springframework.beans.factory.annotation.Value;
+
 import hu.letscode.cloud.EventListener;
 import hu.letscode.cloud.jobs.UpsyncJob;
 
@@ -37,7 +39,7 @@ public class WatcherService extends Thread {
 	private static final Logger logger = Logger.getLogger("cloud-client");
 	private MessageDigest md5;
 
-	public WatcherService(Path directory, BlockingQueue<String> fileQueue) {
+	public WatcherService(BlockingQueue<String> fileQueue, Path directory) {
 		this.directory = directory;
 		this.fileQueue = fileQueue;
 		try {
