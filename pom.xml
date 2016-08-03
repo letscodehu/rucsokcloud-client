@@ -4,8 +4,6 @@
 	<groupId>hu.letscode.cloud</groupId>
 	<artifactId>cloud-client</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-
-	
 	<dependencies>
 		<dependency>
 			<groupId>org.springframework</groupId>
@@ -31,6 +29,11 @@
 			<groupId>org.apache.httpcomponents</groupId>
 			<artifactId>httpmime</artifactId>
 			<version>4.5.1</version>
+		</dependency>
+		<dependency>
+			<groupId>org.mapdb</groupId>
+			<artifactId>mapdb</artifactId>
+			<version>3.0.1</version>
 		</dependency>
 	</dependencies>
 </project>

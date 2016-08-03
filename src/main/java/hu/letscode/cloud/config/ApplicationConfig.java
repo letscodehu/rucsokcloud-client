@@ -1,20 +1,32 @@
 package hu.letscode.cloud.config;
 
+import java.awt.Image;
+import java.awt.MenuItem;
+import java.awt.PopupMenu;
+import java.awt.TrayIcon;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.nio.file.FileSystems;
 import java.nio.file.Path;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ConcurrentMap;
 
-import org.apache.http.HttpHost;
+import javax.swing.ImageIcon;
+
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
+import org.mapdb.DB;
+import org.mapdb.DBMaker;
+import org.mapdb.Serializer;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import hu.letscode.cloud.Application;
 import hu.letscode.cloud.FileModificationTransformer;
+import hu.letscode.cloud.model.FileModel;
 import hu.letscode.cloud.model.FileModification;
 import hu.letscode.cloud.services.BatchingService;
 import hu.letscode.cloud.services.DownStreamService;
@@ -37,10 +49,51 @@ public class ApplicationConfig {
 	@Bean
 	public Application application() {
 		return new Application(
-				new GUIService(),
-				new WatcherService(fileQueue, rootDirectory()), 
+				new GUIService(trayIcon()),
+				new WatcherService(fileQueue, rootDirectory(), fileMap()), 
 				new UpStreamService(requestQueue, new FileModificationTransformer(serverUrl), client()), 
-						new DownStreamService(), new BatchingService(fileQueue, requestQueue, rootDirectory()));
+						new DownStreamService(), new BatchingService(fileQueue, requestQueue));
+	}
+
+	@Bean
+	public TrayIcon trayIcon() {
+		Image image = new ImageIcon("images/robin.jpg").getImage();
+		TrayIcon trayIcon = new TrayIcon(image);
+		trayIcon.setToolTip("Rücsök cloud");
+		trayIcon.setPopupMenu(popupMenu());
+		return trayIcon;
+	}
+	
+	@Bean
+	public DB dataSource() {
+		DB db = DBMaker.fileDB("cloud.db").closeOnJvmShutdown().make();
+		return db;
+	}
+	
+	@SuppressWarnings("unchecked")
+	@Bean
+	public ConcurrentMap<String, FileModel> fileMap() {
+		return (ConcurrentMap<String, FileModel>) dataSource().hashMap("files").createOrOpen();
+	}
+	
+	
+	
+	@Bean
+	public PopupMenu popupMenu() {
+		PopupMenu popupMenu = new PopupMenu();
+		MenuItem close = new MenuItem("Exit");
+		close.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				System.exit(0);
+			}
+		});
+		popupMenu.add(progressLabel());
+		popupMenu.add(close);
+		return popupMenu;
+	}
+	
+	public String progressLabel() {
+		return "Synchronization in progress... ";
 	}
 
 

@@ -44,8 +44,7 @@ public class Application {
 		if (args.length < 2) {
 			showUsage();
 			System.exit(1);
-		}
-		System.getProperties().put("upload.serverUrl", args[1]);
+		}		System.getProperties().put("upload.serverUrl", args[1]);
 		System.getProperties().put("watch.directory", args[0]);
 		ApplicationContext context = new AnnotationConfigApplicationContext(ApplicationConfig.class); 
 		Application app = context.getBean(Application.class);

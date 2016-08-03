@@ -3,10 +3,12 @@ package hu.letscode.cloud.services;
 import java.io.File;
 import java.nio.file.Path;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ConcurrentMap;
 import java.util.logging.Logger;
 
 import org.springframework.beans.factory.annotation.Value;
 
+import hu.letscode.cloud.model.FileModel;
 import hu.letscode.cloud.model.FileModification;
 
 public class BatchingService extends Thread {
@@ -14,11 +16,9 @@ public class BatchingService extends Thread {
 	private BlockingQueue<String> fileQueue;
 	private BlockingQueue<FileModification> requestQueue;
 	private FileModification currentBatch;
-	private Path root;
 	private static final Logger logger = Logger.getLogger("cloud-client");
 
-	public BatchingService(BlockingQueue<String> fileQueue, BlockingQueue<FileModification> requestQueue, Path root) {
-		this.root = root;
+	public BatchingService(BlockingQueue<String> fileQueue, BlockingQueue<FileModification> requestQueue) {
 		this.fileQueue = fileQueue;
 		this.requestQueue = requestQueue;
 		this.currentBatch = new FileModification();

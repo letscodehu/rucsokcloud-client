@@ -1,46 +1,35 @@
 package hu.letscode.cloud.services;
 
-import java.io.File;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.FileSystems;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
-import java.nio.file.WatchEvent;
-import java.nio.file.WatchKey;
 import java.nio.file.WatchService;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Queue;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ConcurrentMap;
 import java.util.logging.Logger;
 
-import org.springframework.beans.factory.annotation.Value;
-
-import hu.letscode.cloud.EventListener;
-import hu.letscode.cloud.jobs.UpsyncJob;
-
-import static java.nio.file.StandardWatchEventKinds.*;
+import hu.letscode.cloud.model.FileModel;
 
 
 public class WatcherService extends Thread {
 
 	private WatchService watcher;
 	private Path directory;
-	private Map<String, Long> readFiles = new HashMap<String, Long>();
+	private ConcurrentMap<String, FileModel> fileMap;
 	private BlockingQueue<String> fileQueue;
 	private static final Logger logger = Logger.getLogger("cloud-client");
 	private MessageDigest md5;
 
-	public WatcherService(BlockingQueue<String> fileQueue, Path directory) {
+	public WatcherService(BlockingQueue<String> fileQueue, Path directory, ConcurrentMap<String, FileModel> fileMap) {
 		this.directory = directory;
+		this.fileMap = fileMap;
 		this.fileQueue = fileQueue;
 		try {
 			md5 = MessageDigest.getInstance("MD5");
@@ -61,11 +50,11 @@ public class WatcherService extends Thread {
 	}
 	
 	private boolean isExists(Path file, BasicFileAttributes attrs) {
-		return readFiles.containsKey(generateHash(file));
+		return fileMap.containsKey(generateHash(file));
 	}
 	
 	private boolean isRecent(Path file, BasicFileAttributes attrs) {
-		return readFiles.get(generateHash(file)).longValue() < attrs.size();
+		return fileMap.get(generateHash(file)).getLastModification() < attrs.size();
 	}
 	
 	private void registerRecursive(final Path root) throws IOException {
@@ -98,7 +87,7 @@ public class WatcherService extends Thread {
 		if (!isExists(file, attrs) || isRecent(file, attrs)) {
 			logger.info("Putting path on the queue " + directory.resolve(file).toString());
 			fileQueue.put(directory.resolve(file).toString());	
-			readFiles.put(generateHash(file), attrs.lastModifiedTime().toMillis());
+			fileMap.put(generateHash(file), new FileModel(attrs.lastModifiedTime().toMillis()));
 		}
 	}
 
