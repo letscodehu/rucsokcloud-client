@@ -2,7 +2,7 @@ package hu.letscode.cloud.events;
 
 import org.springframework.context.ApplicationEvent;
 
-public class CommunicationExceptionEvent extends ApplicationEvent {
+public class CommunicationExceptionEvent extends NotificationEvent {
 
 	private String caption;
 	private String message;

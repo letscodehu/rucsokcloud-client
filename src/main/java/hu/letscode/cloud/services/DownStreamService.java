@@ -1,5 +1,5 @@
 package hu.letscode.cloud.services;
 
-public class DownStreamService {
-
+public interface DownStreamService {
+	public void start();
 }

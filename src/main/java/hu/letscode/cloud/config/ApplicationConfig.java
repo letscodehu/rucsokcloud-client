@@ -1,11 +1,11 @@
 package hu.letscode.cloud.config;
 
 import java.awt.Image;
-import java.awt.MenuItem;
-import java.awt.PopupMenu;
 import java.awt.TrayIcon;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.nio.file.FileSystems;
 import java.nio.file.Path;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -13,35 +13,36 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentMap;
 
 import javax.swing.ImageIcon;
+import javax.swing.JMenuItem;
+import javax.swing.JPopupMenu;
 
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 import org.mapdb.DB;
 import org.mapdb.DBMaker;
-import org.mapdb.Serializer;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
-
-import hu.letscode.cloud.Application;
-import hu.letscode.cloud.FileModificationTransformer;
 import hu.letscode.cloud.model.FileModel;
 import hu.letscode.cloud.model.FileModification;
-import hu.letscode.cloud.services.BatchingService;
-import hu.letscode.cloud.services.DownStreamService;
-import hu.letscode.cloud.services.GUIService;
-import hu.letscode.cloud.services.UpStreamService;
-import hu.letscode.cloud.services.WatcherService;
+
 
 @Configuration
+@ComponentScan(basePackages = "hu.letscode.cloud")
 public class ApplicationConfig {
 
-	private static volatile BlockingQueue<String> fileQueue = new ArrayBlockingQueue<String>(10);
-	private static volatile BlockingQueue<FileModification> requestQueue = new ArrayBlockingQueue<FileModification>(4);
+	
+	@Bean(name = "fileQueue")
+	public BlockingQueue<String> fileQueue() {
+		return new ArrayBlockingQueue<String>(10);
+	}
+	
+	@Bean(name = "requestQueue")
+	public BlockingQueue<FileModification> requestQueue() {
+		return new ArrayBlockingQueue<FileModification>(4);
+	}
 	
 	@Value("${watch.directory}")
 	private String path;
@@ -49,38 +50,32 @@ public class ApplicationConfig {
 	@Value("${upload.serverUrl}")
 	private String serverUrl;
 	
-	@Autowired
-	private ApplicationEventPublisher publisher;
-	
-	@Bean
-	public Application application() {
-		return new Application(
-				new GUIService(trayIcon()),
-				watcherService(), 
-				upstreamService(), 
-						new DownStreamService(), batchingService());
-	}
-
-	private BatchingService batchingService() {
-		return new BatchingService(fileQueue, requestQueue);
-	}
-
-	private WatcherService watcherService() {
-		return new WatcherService(fileQueue, rootDirectory(), fileMap());
-	}
-
-	private UpStreamService upstreamService() {
-		UpStreamService service = new UpStreamService(requestQueue, new FileModificationTransformer(serverUrl), client());
-		service.setApplicationEventPublisher(publisher);
-		return service;
-	}
-
 	@Bean
 	public TrayIcon trayIcon() {
-		Image image = new ImageIcon("images/robin.jpg").getImage();
+		Image image = new ImageIcon("/home/tacsiazuma/share/java/cloud-client/src/main/resources/images/robin.jpg").getImage();
 		TrayIcon trayIcon = new TrayIcon(image);
 		trayIcon.setToolTip("Rücsök cloud");
-		trayIcon.setPopupMenu(popupMenu());
+		final JPopupMenu jpopup = popupMenu();
+		trayIcon.addMouseListener(new MouseAdapter() {
+			
+
+		    @Override
+		    public void mousePressed(MouseEvent e) {
+		        maybeShowPopup(e);
+		    }
+		    
+		    private void maybeShowPopup(MouseEvent e) {
+		    	if (e.isPopupTrigger()) {
+                    jpopup.setLocation(e.getX(), e.getY());
+                    jpopup.setInvoker(jpopup);
+                    jpopup.setVisible(true);
+                }
+		    }
+			
+            public void mouseReleased(MouseEvent e) {
+                maybeShowPopup(e);
+            }
+        });
 		return trayIcon;
 	}
 	
@@ -99,9 +94,9 @@ public class ApplicationConfig {
 	
 	
 	@Bean
-	public PopupMenu popupMenu() {
-		PopupMenu popupMenu = new PopupMenu();
-		MenuItem close = new MenuItem("Exit");
+	public JPopupMenu popupMenu() {
+		JPopupMenu popupMenu = new JPopupMenu();
+		JMenuItem close = new JMenuItem("Exit");
 		close.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				System.exit(0);

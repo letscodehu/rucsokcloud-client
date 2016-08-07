@@ -5,17 +5,17 @@ import java.io.File;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.mime.HttpMultipartMode;
 import org.apache.http.entity.mime.MultipartEntityBuilder;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
 
 import hu.letscode.cloud.model.FileModification;
 
+@Component
 public class FileModificationTransformer {
 
-	private String serverUrl;
 	
-	public FileModificationTransformer(String serverUrl) {
-		System.out.println(serverUrl);
-		this.serverUrl = serverUrl;
-	}
+	@Value("${upload.serverUrl}")
+	private String serverUrl;
 	
 	public HttpPost transform(FileModification mod) {
 		HttpPost post = new HttpPost(serverUrl);
